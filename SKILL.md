@@ -1,53 +1,60 @@
 ---
 name: chromecast
-description: Control a Chromecast or Google Cast device on the local network. Use when the user asks to play a YouTube video on TV, pause/resume playback, change volume, or control any Cast-enabled device (Chromecast, Android TV, Samsung with Chromecast built-in). Requires being on the same Wi-Fi network as the device.
+description: Control Cast devices (Chromecast AND Samsung SmartTV) on the local network. Use when the user asks to play a YouTube video on TV, pause/resume, change volume, or list available screens. Discovers all devices automatically using multiple protocols (mDNS for Chromecast, SSDP/DIAL for Samsung). Requires being on the same Wi-Fi network as the devices.
 ---
 
-# Chromecast Skill ⚡
+# Chromecast + Samsung SmartTV Skill ⚡
 
-Control any Google Cast device on your local network via Python — play YouTube videos, control playback, change volume. All with a voice note.
+Control any screen on your local network — Chromecast, Samsung SmartTV, or any DIAL-compatible device.
 
 ## Quick Reference
 
 ```bash
-# Play a YouTube video on TV
-python3 {baseDir}/scripts/cast.py play <video_id_or_url> [--device "Family Room"]
+# Discover ALL devices on the network (Chromecast + Samsung)
+python3 {baseDir}/scripts/cast.py discover
 
-# Pause / Resume
-python3 {baseDir}/scripts/cast.py pause [--device "Family Room"]
-python3 {baseDir}/scripts/cast.py resume [--device "Family Room"]
+# Play a YouTube video — interactive device picker
+python3 {baseDir}/scripts/cast.py play <video_id_or_url>
+
+# Play on a specific Chromecast
+python3 {baseDir}/scripts/cast.py play <url> --device "Family Room"
+
+# Play on Samsung TV (by IP)
+python3 {baseDir}/scripts/cast.py play <url> --samsung 192.168.1.126
+
+# Pause / Resume / Stop
+python3 {baseDir}/scripts/cast.py pause [--device X | --samsung X]
+python3 {baseDir}/scripts/cast.py resume [--device X | --samsung X]
+python3 {baseDir}/scripts/cast.py stop [--device X | --samsung X]
 
 # Volume (0.0 to 1.0)
-python3 {baseDir}/scripts/cast.py volume 0.5 [--device "Family Room"]
-
-# Stop / Disconnect
-python3 {baseDir}/scripts/cast.py stop [--device "Family Room"]
-
-# List all Cast devices on the network
-python3 {baseDir}/scripts/cast.py list
+python3 {baseDir}/scripts/cast.py volume 0.7 [--device X | --samsung X]
 ```
 
-## Setup (first time only)
+## Setup
 
 ```bash
-pip3 install pychromecast --break-system-packages
+pip3 install pychromecast samsungtvws --break-system-packages
 ```
 
-That's it. No API keys, no config files.
+**First time with Samsung:** run `discover` or `play` — a pairing popup will appear on the TV. Accept it once and the token is saved permanently.
 
-## How it works
+## Discovery protocols
 
-1. Scans local network for Cast devices via mDNS (port 8009)
-2. Connects directly to the device by IP
-3. Launches the YouTube app on the TV
-4. Sends the video ID via the Cast protocol
+| Protocol | Devices | Port |
+|----------|---------|------|
+| mDNS `_googlecast._tcp` | Chromecast, Chromecast built-in | 8009 |
+| SSDP DIAL | Samsung SmartTV (Tizen), other DIAL TVs | 7678/8001 |
 
 ## Known devices (local network)
-| Device | IP | Port |
-|--------|----|------|
-| Family Room | 192.168.1.164 | 8009 |
+| Device | Type | IP | Port |
+|--------|------|-----|------|
+| Family Room | Chromecast | 192.168.1.164 | 8009 |
+| Samsung Living | Samsung SmartTV (70TA, 4K) | 192.168.1.126 | 8001 |
 
-## Notes
-- Must be on the same Wi-Fi as the Chromecast
-- YouTube video ID can be extracted from any YouTube URL
-- Works with Chromecast, Chromecast built-in TVs (Samsung, Sony, etc.), Android TV
+## Agent usage
+
+When the user says "put X on the TV" or "cast this to the screen":
+1. Run `discover` to find all available devices
+2. Present the list to the user (if multiple)
+3. Run `play <video_id>` on the chosen device
