@@ -58,3 +58,27 @@ When the user says "put X on the TV" or "cast this to the screen":
 1. Run `discover` to find all available devices
 2. Present the list to the user (if multiple)
 3. Run `play <video_id>` on the chosen device
+
+## Samsung via YouTube Lounge API (RECOMMENDED)
+
+The most reliable way to cast to Samsung TVs — same protocol Android uses.
+
+```bash
+pip3 install pyytlounge --break-system-packages
+```
+
+```python
+# Quick cast to Samsung via YouTube Lounge
+import asyncio, urllib.request, re
+from pyytlounge import YtLoungeApi
+
+async def cast_to_samsung(video_id, tv_ip='192.168.1.126'):
+    r = urllib.request.urlopen(f'http://{tv_ip}:8080/ws/apps/YouTube', timeout=5)
+    screen_id = re.search(r'<screenId>([^<]+)</screenId>', r.read().decode()).group(1)
+    async with YtLoungeApi('Claudio') as api:
+        await api.pair_with_screen_id(screen_id)
+        await api.connect()
+        await api.play_video(video_id)
+
+asyncio.run(cast_to_samsung('VIDEO_ID'))
+```
